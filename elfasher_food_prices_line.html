@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #fbfbfb;
+      --text: #111111;
+      --muted: #6b6b6b;
+      --grid: #d9d9d9;
+      --line-1: #6F8FA6;
+      --line-2: #A05A5A;
+      --line-3: #B08A57;
+      --source: #685db2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "Montserrat", sans-serif;
+      color: var(--text);
+    }
+
+    .chart-wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 18px 18px 10px;
+      background: var(--bg);
+    }
+
+    .chart-title {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.15;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .chart-subtitle {
+      margin-top: 8px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .chart-legend {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 16px;
+      padding-left: 2px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      line-height: 1.25;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .legend-line {
+      width: 24px;
+      height: 0;
+      display: inline-block;
+      border-top-width: 3px;
+      border-top-style: solid;
+      position: relative;
+      flex: 0 0 24px;
+    }
+
+    .legend-line::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      top: -5px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .legend-line.line-1 {
+      color: var(--line-1);
+      border-top-color: var(--line-1);
+    }
+
+    .legend-line.line-2 {
+      color: var(--line-2);
+      border-top-color: var(--line-2);
+    }
+
+    .legend-line.line-3 {
+      color: var(--line-3);
+      border-top-color: var(--line-3);
+    }
+
+    .chart-box {
+      position: relative;
+      width: 100%;
+      height: 470px;
+      background: var(--bg);
+    }
+
+    .chart-note {
+      margin-top: 14px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+      font-style: normal;
+    }
+
+    .chart-source {
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .chart-source a {
+      color: var(--source);
+      text-decoration: none;
+    }
+
+    .chart-source a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .chart-title { font-size: 22px; }
+      .chart-subtitle { font-size: 14px; }
+      .chart-legend {
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .legend-item { font-size: 13px; }
+      .chart-box { height: 400px; }
+      .chart-wrap { padding: 14px 14px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-wrap">
+    <h2 class="chart-title">Цены на базовые продукты в Эль-Фашире резко выросли за полгода</h2>
+    <div class="chart-subtitle">Стоимость сорго, пшеничной муки и минимальной продовольственной корзины WFP, SDG</div>
+
+    <div class="chart-legend" aria-hidden="true">
+      <span class="legend-item">
+        <span class="legend-line line-1"></span>
+        Сорго, SDG/кг
+      </span>
+      <span class="legend-item">
+        <span class="legend-line line-2"></span>
+        Пшеничная мука, SDG/кг
+      </span>
+      <span class="legend-item">
+        <span class="legend-line line-3"></span>
+        Минимальная продовольственная корзина WFP, SDG
+      </span>
+    </div>
+
+    <div class="chart-box">
+      <canvas id="elfasherPricesChart"></canvas>
+    </div>
+
+    <div class="chart-note">
+      Ряд отражает столичный рынок Северного Дарфура — Эль-Фашир: в бюллетенях WFP цены собираются по рынкам столиц штатов,
+      но в таблицах публикуются под названием штата. После июля 2025 года ряд здесь не продолжается: WFP отдельно указывала,
+      что рынок Эль-Фашира был экстремально искажен из-за осады, а в более поздних выпусках для North Darfur уже использовался
+      рынок Tawila вместо El Fasher. Поэтому для корректного сравнения показан только период с февраля по июль 2025 года.
+    </div>
+
+    <div class="chart-source">
+      Диаграмма: Азалия Мухаметшина, 2026 · Источник:
+      <a href="https://s3.eu-west-1.amazonaws.com/logcluster-web-prod-files/public/2025-03/Market%20Monitor%20Sudan%20Report%20March%202025.pdf" target="_blank" rel="noopener noreferrer">WFP Sudan Market Monitor</a>
+    </div>
+  </div>
+
+  <script>
+    const formatNumber = (value) =>
+      new Intl.NumberFormat("ru-RU").format(value).replace(/\u00A0/g, " ");
+
+    const labels = [
+      "Февраль 2025",
+      "Март 2025",
+      "Апрель 2025",
+      "Май 2025",
+      "Июнь 2025",
+      "Июль 2025"
+    ];
+
+    const bgPlugin = {
+      id: "customCanvasBackgroundColor",
+      beforeDraw(chart, args, options) {
+        const { ctx, canvas } = chart;
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-over";
+        ctx.fillStyle = options.color || "#fbfbfb";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+    };
+
+    const hoverValuePlugin = {
+      id: "hoverValuePlugin",
+      afterDatasetsDraw(chart) {
+        const active = chart.getActiveElements();
+        if (!active || !active.length) return;
+
+        const { ctx, chartArea } = chart;
+        const activeEl = active[0];
+        const element = chart.getDatasetMeta(activeEl.datasetIndex).data[activeEl.index];
+        const value = chart.data.datasets[activeEl.datasetIndex].data[activeEl.index];
+        const label = formatNumber(value);
+
+        ctx.save();
+        ctx.font = "600 12px Montserrat";
+        ctx.textBaseline = "middle";
+
+        const paddingX = 8;
+        const boxH = 24;
+        const textW = ctx.measureText(label).width;
+        const boxW = textW + paddingX * 2;
+
+        let x = element.x - boxW / 2;
+        let y = element.y - boxH - 10;
+
+        if (x < chartArea.left) x = chartArea.left;
+        if (x + boxW > chartArea.right) x = chartArea.right - boxW;
+        if (y < 6) y = element.y + 12;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.rect(x, y, boxW, boxH);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#111111";
+        ctx.fillText(label, x + paddingX, y + boxH / 2);
+        ctx.restore();
+      }
+    };
+
+    const ctx = document.getElementById("elfasherPricesChart");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Сорго, SDG/кг",
+            data: [1667, 1333, 2641, 4950, 11322, 16021],
+            borderColor: "#6F8FA6",
+            backgroundColor: "#6F8FA6",
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 5,
+            pointBorderWidth: 0,
+            tension: 0.15
+          },
+          {
+            label: "Пшеничная мука, SDG/кг",
+            data: [4250, 4300, 6000, 14000, 26500, 40625],
+            borderColor: "#A05A5A",
+            backgroundColor: "#A05A5A",
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 5,
+            pointBorderWidth: 0,
+            tension: 0.15
+          },
+          {
+            label: "Минимальная продовольственная корзина WFP, SDG",
+            data: [2189, 2597, 4323, 6605, 13428, 17910],
+            borderColor: "#B08A57",
+            backgroundColor: "#B08A57",
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 5,
+            pointBorderWidth: 0,
+            tension: 0.15
+          }
+        ]
+      },
+      plugins: [bgPlugin, hoverValuePlugin],
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 400
+        },
+        layout: {
+          padding: {
+            top: 30,
+            right: 8,
+            bottom: 0,
+            left: 0
+          }
+        },
+        interaction: {
+          mode: "nearest",
+          intersect: true
+        },
+        onHover: (event, activeElements, chart) => {
+          chart.canvas.style.cursor = activeElements.length ? "pointer" : "default";
+        },
+        plugins: {
+          customCanvasBackgroundColor: {
+            color: "#fbfbfb"
+          },
+          legend: {
+            display: false
+          },
+          tooltip: {
+            enabled: false
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false
+            },
+            border: {
+              color: "#111111",
+              width: 1
+            },
+            ticks: {
+              color: "#333333",
+              maxRotation: 0,
+              minRotation: 0,
+              padding: 8,
+              font: {
+                family: "Montserrat",
+                size: 13,
+                weight: "500"
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: 45000,
+            ticks: {
+              stepSize: 10000,
+              color: "#8a8a8a",
+              padding: 8,
+              font: {
+                family: "Montserrat",
+                size: 13,
+                weight: "500"
+              },
+              callback: function(value) {
+                return formatNumber(value);
+              }
+            },
+            grid: {
+              color: "#d9d9d9",
+              drawBorder: false
+            },
+            border: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
